@@ -48,9 +48,11 @@ class SuitePYWebService extends SugarWebServiceImplv4_1 {
             return;
         }
         try {
-            $pdf_template = Base64PDFGenerator::get_base64_pdf($template_id, $bean_module, $bean_id);
+            $bean = BeanFactory::getBean($bean_module, $bean_id);
+            $pdf_template = Base64PDFGenerator::get_base64_pdf($template_id, $bean);
+            $filename = empty($bean->name) ? 'document' : $bean->name;
             return array(
-                'filename' => 'document.pdf',
+                'filename' => str_replace(" ", "_", $filename) . '.pdf',
                 'file' => $pdf_template,
                 'error' => '',
             );

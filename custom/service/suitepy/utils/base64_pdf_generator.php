@@ -28,7 +28,7 @@ if (!defined('sugarEntry') || !sugarEntry) {
 
 abstract class Base64PDFGenerator {
 
-    public static function get_base64_pdf($template_id, $bean_module, $bean_id) {
+    public static function get_base64_pdf($template_id, $bean) {
 
         require_once('modules/AOS_PDF_Templates/PDF_Lib/mpdf.php');
         require_once('modules/AOS_PDF_Templates/templateParser.php');
@@ -37,9 +37,8 @@ abstract class Base64PDFGenerator {
 
         global $mod_strings, $sugar_config;
 
-        $bean = BeanFactory::getBean($bean_module, $bean_id);
         if(empty($bean->id)) {
-            throw new Exception('Bean not found.');
+            throw new Exception('Invalid bean.');
         }
 
         $variableName = strtolower($bean->module_dir);
