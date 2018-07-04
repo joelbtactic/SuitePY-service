@@ -4,6 +4,9 @@
 # SuitePY-service
 Custom SuiteCRM WebService for SuitePY.
 
+# How to install
+Download zip of [latest release](https://github.com/sanchezfauste/SuitePY-service/releases/latest) and install it using Module Loader.
+
 ## Custom API EntryPoints
 REST URL
 ```
