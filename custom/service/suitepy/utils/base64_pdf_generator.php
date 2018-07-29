@@ -35,8 +35,6 @@ abstract class Base64PDFGenerator {
         require_once('modules/AOS_PDF_Templates/sendEmail.php');
         require_once('modules/AOS_PDF_Templates/AOS_PDF_Templates.php');
 
-        global $mod_strings, $sugar_config;
-
         if(empty($bean->id)) {
             throw new Exception('Invalid bean.');
         }
