@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
- $manifest = array( 
+ $manifest = array(
     'name' => 'SuitePY Service',
     'description' => 'Custom SuiteCRM WebService for SuitePY.',
     'type' => 'module',
     'is_uninstallable' => 'Yes',
-    'acceptable_sugar_versions' => array (
+    'acceptable_sugar_versions' => array(
         'regex_matches' => array('6\.5\.*'),
     ),
     'acceptable_sugar_flavors' => array('CE'),

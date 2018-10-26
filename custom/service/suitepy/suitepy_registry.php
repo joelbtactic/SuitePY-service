@@ -22,9 +22,10 @@
 
 require_once 'service/v4_1/registry.php';
 
-class RegistrySuitePY extends registry_v4_1 {
-
-    protected function registerFunction() {
+class RegistrySuitePY extends registry_v4_1
+{
+    protected function registerFunction()
+    {
         parent::registerFunction();
         $this->serviceClass->registerFunction(
             'get_pdf_template',
@@ -40,7 +41,8 @@ class RegistrySuitePY extends registry_v4_1 {
         );
     }
 
-    protected function registerTypes() {
+    protected function registerTypes()
+    {
         parent::registerTypes();
         $this->serviceClass->registerType(
             'pdf_template',
@@ -58,6 +60,4 @@ class RegistrySuitePY extends registry_v4_1 {
             'xsd:string'
         );
     }
-
 }
-

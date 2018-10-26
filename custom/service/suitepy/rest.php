@@ -32,4 +32,3 @@ $registry_class = 'RegistrySuitePY';
 $location = 'custom/service/suitepy/rest.php';
 
 require_once 'service/core/webservice.php';
-

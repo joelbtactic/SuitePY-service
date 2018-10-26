@@ -20,14 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-if(!defined('sugarEntry')) {
+if (!defined('sugarEntry')) {
     define('sugarEntry', true);
 }
 
 require_once 'service/v4_1/SugarWebServiceImplv4_1.php';
 require_once 'custom/service/suitepy/utils/base64_pdf_generator.php';
 
-class SuitePYWebService extends SugarWebServiceImplv4_1 {
+class SuitePYWebService extends SugarWebServiceImplv4_1
+{
 
     /**
      * Retrieve PDF Template for a given module record.
@@ -40,11 +41,21 @@ class SuitePYWebService extends SugarWebServiceImplv4_1 {
      *                        Binary 'file' -- The binary content of the file in base64.
      *                        String 'error' -- Error if any
      * @exception 'SoapFault' -- The SOAP error, if any
-     */ 
-    function get_pdf_template($session, $template_id, $bean_module, $bean_id) {
+     */
+    public function get_pdf_template($session, $template_id, $bean_module, $bean_id)
+    {
         $error = new SoapError();
-        if (!self::$helperObject->checkSessionAndModuleAccess($session, 'invalid_session', $bean_module, 'read', 'no_access', $error)) {
-            $GLOBALS['log']->error('End: SugarWebServiceImpl->get_pdf_template - FAILED on checkSessionAndModuleAccess');
+        if (!self::$helperObject->checkSessionAndModuleAccess(
+            $session,
+            'invalid_session',
+            $bean_module,
+            'read',
+            'no_access',
+            $error
+        )) {
+            $GLOBALS['log']->error(
+                'End: SugarWebServiceImpl->get_pdf_template - FAILED on checkSessionAndModuleAccess'
+            );
             return;
         }
         try {
@@ -64,6 +75,4 @@ class SuitePYWebService extends SugarWebServiceImplv4_1 {
             );
         }
     }
-
 }
-
