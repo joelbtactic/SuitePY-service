@@ -21,23 +21,21 @@
  */
 
 if (!defined('sugarEntry') || !sugarEntry) {
-   die('Not A Valid Entry Point');
+    die('Not A Valid Entry Point');
 }
 
 // Based on 'modules/AOS_PDF_Templates/generatePdf.php'.
 
-abstract class Base64PDFGenerator {
-
-    public static function get_base64_pdf($template_id, $bean) {
-
+abstract class Base64PDFGenerator
+{
+    public static function get_base64_pdf($template_id, $bean)
+    {
         require_once('modules/AOS_PDF_Templates/PDF_Lib/mpdf.php');
         require_once('modules/AOS_PDF_Templates/templateParser.php');
         require_once('modules/AOS_PDF_Templates/sendEmail.php');
         require_once('modules/AOS_PDF_Templates/AOS_PDF_Templates.php');
 
-        global $mod_strings, $sugar_config;
-
-        if(empty($bean->id)) {
+        if (empty($bean->id)) {
             throw new Exception('Invalid bean.');
         }
 
@@ -45,12 +43,17 @@ abstract class Base64PDFGenerator {
         $lineItemsGroups = array();
         $lineItems = array();
 
-        $sql = "SELECT pg.id, pg.product_id, pg.group_id FROM aos_products_quotes pg LEFT JOIN aos_line_item_groups lig ON pg.group_id = lig.id WHERE pg.parent_type = '" . $bean->object_name . "' AND pg.parent_id = '" . $bean->id . "' AND pg.deleted = 0 ORDER BY lig.number ASC, pg.number ASC";
+        $sql = "SELECT pg.id, pg.product_id, pg.group_id "
+            ."FROM aos_products_quotes pg "
+                ."LEFT JOIN aos_line_item_groups lig ON pg.group_id = lig.id "
+            ."WHERE pg.parent_type = '" . $bean->object_name . "' "
+                ."AND pg.parent_id = '" . $bean->id . "' "
+                ."AND pg.deleted = 0 "
+            ."ORDER BY lig.number ASC, pg.number ASC";
         $res = $bean->db->query($sql);
         while ($row = $bean->db->fetchByAssoc($res)) {
             $lineItemsGroups[$row['group_id']][$row['id']] = $row['product_id'];
             $lineItems[$row['id']] = $row['product_id'];
-
         }
 
         $template = new AOS_PDF_Templates();
@@ -100,11 +103,13 @@ abstract class Base64PDFGenerator {
         $footer = preg_replace($search, $replace, $template->pdffooter);
         $text = preg_replace($search, $replace, $template->description);
         $text = str_replace("<p><pagebreak /></p>", "<pagebreak />", $text);
-        $text = preg_replace_callback('/\{DATE\s+(.*?)\}/',
+        $text = preg_replace_callback(
+            '/\{DATE\s+(.*?)\}/',
             function ($matches) {
                 return date($matches[1]);
             },
-            $text);
+            $text
+        );
         $text = str_replace("\$aos_quotes", "\$" . $variableName, $text);
         $text = str_replace("\$aos_invoices", "\$" . $variableName, $text);
         $text = str_replace("\$total_amt", "\$" . $variableName . "_total_amt", $text);
@@ -125,7 +130,18 @@ abstract class Base64PDFGenerator {
         ob_clean();
         try {
             $orientation = ($template->orientation == "Landscape") ? "-L" : "";
-            $pdf = new mPDF('en', $template->page_size . $orientation, '', 'DejaVuSansCondensed', $template->margin_left, $template->margin_right, $template->margin_top, $template->margin_bottom, $template->margin_header, $template->margin_footer);
+            $pdf = new mPDF(
+                'en',
+                $template->page_size . $orientation,
+                '',
+                'DejaVuSansCondensed',
+                $template->margin_left,
+                $template->margin_right,
+                $template->margin_top,
+                $template->margin_bottom,
+                $template->margin_header,
+                $template->margin_footer
+            );
             $pdf->SetAutoFont();
             $pdf->SetHTMLHeader($header);
             $pdf->SetHTMLFooter($footer);
@@ -134,11 +150,14 @@ abstract class Base64PDFGenerator {
         } catch (mPDF_exception $e) {
             return false;
         }
-
     }
 
-    private static function populate_group_lines($text, $lineItemsGroups, $lineItems, $element = 'table') {
-
+    private static function populate_group_lines(
+        $text,
+        $lineItemsGroups,
+        $lineItems,
+        $element = 'table'
+    ) {
         $firstValue = '';
         $firstNum = 0;
 
@@ -151,8 +170,9 @@ abstract class Base64PDFGenerator {
 
         $groups = new AOS_Line_Item_Groups();
         foreach ($groups->field_defs as $name => $arr) {
-            if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id') || $arr['type'] == 'id' || $arr['type'] == 'link')) {
-
+            if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id')
+                || $arr['type'] == 'id' || $arr['type'] == 'link')
+            ) {
                 $curNum = strpos($text, '$aos_line_item_groups_' . $name);
                 if ($curNum) {
                     if ($curNum < $firstNum || $firstNum == 0) {
@@ -224,10 +244,10 @@ abstract class Base64PDFGenerator {
 
 
         return $text;
-
     }
 
-    private static function populate_product_lines($text, $lineItems, $element = 'tr') {
+    private static function populate_product_lines($text, $lineItems, $element = 'tr')
+    {
         $firstValue = '';
         $firstNum = 0;
 
@@ -240,20 +260,19 @@ abstract class Base64PDFGenerator {
         //Find first and last valid line values
         $product_quote = new AOS_Products_Quotes();
         foreach ($product_quote->field_defs as $name => $arr) {
-            if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id') || $arr['type'] == 'id' || $arr['type'] == 'link')) {
-
+            if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id')
+                || $arr['type'] == 'id' || $arr['type'] == 'link')
+            ) {
                 $curNum = strpos($text, '$aos_products_quotes_' . $name);
 
                 if ($curNum) {
                     if ($curNum < $firstNum || $firstNum == 0) {
                         $firstValue = '$aos_products_quotes_' . $name;
                         $firstNum = $curNum;
-
                     }
                     if ($curNum > $lastNum) {
                         $lastValue = '$aos_products_quotes_' . $name;
                         $lastNum = $curNum;
-
                     }
                 }
             }
@@ -261,8 +280,9 @@ abstract class Base64PDFGenerator {
 
         $product = new AOS_Products();
         foreach ($product->field_defs as $name => $arr) {
-            if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id') || $arr['type'] == 'id' || $arr['type'] == 'link')) {
-
+            if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id')
+                || $arr['type'] == 'id' || $arr['type'] == 'link')
+            ) {
                 $curNum = strpos($text, '$aos_products_' . $name);
                 if ($curNum) {
                     if ($curNum < $firstNum || $firstNum == 0) {
@@ -326,7 +346,8 @@ abstract class Base64PDFGenerator {
         return $text;
     }
 
-    private static function populate_service_lines($text, $lineItems, $element = 'tr') {
+    private static function populate_service_lines($text, $lineItems, $element = 'tr')
+    {
         $firstValue = '';
         $firstNum = 0;
 
@@ -341,8 +362,9 @@ abstract class Base64PDFGenerator {
         //Find first and last valid line values
         $product_quote = new AOS_Products_Quotes();
         foreach ($product_quote->field_defs as $name => $arr) {
-            if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id') || $arr['type'] == 'id' || $arr['type'] == 'link')) {
-
+            if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id')
+                || $arr['type'] == 'id' || $arr['type'] == 'link')
+            ) {
                 $curNum = strpos($text, '$aos_services_quotes_' . $name);
                 if ($curNum) {
                     if ($curNum < $firstNum || $firstNum == 0) {
@@ -402,6 +424,4 @@ abstract class Base64PDFGenerator {
         }
         return $text;
     }
-
 }
-
