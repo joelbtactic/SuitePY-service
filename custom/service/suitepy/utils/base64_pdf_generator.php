@@ -30,7 +30,6 @@ abstract class Base64PDFGenerator
 {
     public static function get_base64_pdf($template_id, $bean)
     {
-        require_once('modules/AOS_PDF_Templates/PDF_Lib/mpdf.php');
         require_once('modules/AOS_PDF_Templates/templateParser.php');
         require_once('modules/AOS_PDF_Templates/sendEmail.php');
         require_once('modules/AOS_PDF_Templates/AOS_PDF_Templates.php');
@@ -142,12 +141,12 @@ abstract class Base64PDFGenerator
                 $template->margin_header,
                 $template->margin_footer
             );
-            $pdf->SetAutoFont();
+            $pdf->autoLangToFont = true;
             $pdf->SetHTMLHeader($header);
             $pdf->SetHTMLFooter($footer);
             $pdf->WriteHTML($printable);
             return base64_encode($pdf->Output('ignored', 'S'));
-        } catch (mPDF_exception $e) {
+        } catch (MpdfException $e) {
             return false;
         }
     }
