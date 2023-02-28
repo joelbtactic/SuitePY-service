@@ -1,5 +1,5 @@
 [![license](https://img.shields.io/github/license/sanchezfauste/SuitePY-service.svg?style=flat-square)](LICENSE)
-[![GitHub (pre-)release](https://img.shields.io/github/release/sanchezfauste/SuitePY-service/all.svg?style=flat-square)](https://github.com/sanchezfauste/SuitePY-service/releases/latest)
+[![GitHub (pre-)release](https://img.shields.io/github/release/sanchezfauste/SuitePY-service/all.svg?style=flat-square)](https://github.com/joelbtactic/SuitePY-service/releases/latest)
 
 # SuitePY-service
 
@@ -27,9 +27,9 @@ composer update
 
 # How to install
 
-Download zip of [latest release](https://github.com/sanchezfauste/SuitePY-service/releases/latest) and install it using Module Loader. For Suitecrm 7.12 or superior versions zip elements must not be all together in a general dir, and must be separated.
+Download zip of [latest release](https://github.com/joelbtactic/SuitePY-service/releases/latest) and install it using Module Loader. For Suitecrm 7.12 or superior versions zip elements must not be all together in a general dir, and must be separated.
 
-It is not compatible with SuiteCRM 8.X versions.
+It is not compatible for SuiteCRM 8.X versions.
 
 ## Custom API EntryPoints
 
