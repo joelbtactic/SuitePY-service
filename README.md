@@ -1,5 +1,5 @@
-[![license](https://img.shields.io/github/license/sanchezfauste/SuitePY-service.svg?style=flat-square)](LICENSE)
-[![GitHub (pre-)release](https://img.shields.io/github/release/sanchezfauste/SuitePY-service/all.svg?style=flat-square)](https://github.com/joelbtactic/SuitePY-service/releases/latest)
+[![license](https://img.shields.io/github/license/btactic/SuitePY-service.svg?style=flat-square)](LICENSE)
+[![GitHub (pre-)release](https://img.shields.io/github/release/btactic/SuitePY-service/all.svg?style=flat-square)](https://github.com/btactic/SuitePY-service/releases/latest)
 
 # SuitePY-service
 Custom SuiteCRM WebService for SuitePY.
@@ -34,7 +34,7 @@ composer show -i | grep 'mpdf'
 
 # How to install
 
-Download zip of [latest release](https://github.com/joelbtactic/SuitePY-service/releases/latest) and install it using Module Loader. For Suitecrm 7.12 or superior versions zip elements must not be all together in a general dir, and must be separated:
+Download zip of [latest release](https://github.com/btactic/SuitePY-service/releases/latest) and install it using Module Loader. For Suitecrm 7.12 or superior versions zip elements must not be all together in a general dir, and must be separated:
 
 ```
 mkdir /tmp/suitepyservice
