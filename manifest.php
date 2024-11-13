@@ -3,8 +3,8 @@
 /**
  * Suite PY is a simple Python client for SuiteCRM API.
  *
- * Copyright (C) 2017-2018 BTACTIC, SCCL
- * Copyright (C) 2017-2018 Marc Sanchez Fauste
+ * Copyright (C) 2024-2025 BTACTIC, SCCL
+ * Copyright (C) 2024-2025 Joel Ampurdanés Bonjoch
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,24 +22,24 @@
 
  $manifest = array(
     'name' => 'SuitePY Service',
-    'description' => 'Custom SuiteCRM WebService for SuitePY.',
+    'description' => 'Custom SuiteCRM Endpoints for SuitePY.',
     'type' => 'module',
-    'is_uninstallable' => 'Yes',
+    'is_uninstallable' => true,
     'acceptable_sugar_versions' => array(
         'regex_matches' => array('6\.5\.*'),
     ),
     'acceptable_sugar_flavors' => array('CE'),
-    'author' => 'BTACTIC SCCL, Marc Sánchez',
+    'author' => 'BTACTIC SCCL, Joel Ampurdanés',
     'version' => '0.1',
-    'published_date' => '2018-07-03',
+    'published_date' => '2024-11-13',
 );
 
 $installdefs = array(
     'id'=> 'suitepy_service',
     'copy' => array(
         array(
-            'from'=> '<basepath>/custom/service/suitepy',
-            'to'=>'custom/service/suitepy'
+            'from'=> '<basepath>/custom/application/Ext',
+            'to'=>'custom/application/Ext'
         ),
     )
 );
