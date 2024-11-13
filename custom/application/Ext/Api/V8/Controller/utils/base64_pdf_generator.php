@@ -20,6 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+use SuiteCRM\PDF\Exceptions\PDFException;
+use SuiteCRM\PDF\PDFWrapper;
+
 if (!defined('sugarEntry') || !sugarEntry) {
     die('Not A Valid Entry Point');
 }
@@ -33,6 +36,7 @@ abstract class Base64PDFGenerator
         require_once('modules/AOS_PDF_Templates/templateParser.php');
         require_once('modules/AOS_PDF_Templates/sendEmail.php');
         require_once('modules/AOS_PDF_Templates/AOS_PDF_Templates.php');
+        require_once('vendor/autoload.php');
 
         if (empty($bean->id)) {
             throw new Exception('Invalid bean.');
@@ -42,20 +46,14 @@ abstract class Base64PDFGenerator
         $lineItemsGroups = array();
         $lineItems = array();
 
-        $sql = "SELECT pg.id, pg.product_id, pg.group_id "
-            ."FROM aos_products_quotes pg "
-                ."LEFT JOIN aos_line_item_groups lig ON pg.group_id = lig.id "
-            ."WHERE pg.parent_type = '" . $bean->object_name . "' "
-                ."AND pg.parent_id = '" . $bean->id . "' "
-                ."AND pg.deleted = 0 "
-            ."ORDER BY lig.number ASC, pg.number ASC";
+        $sql = "SELECT pg.id, pg.product_id, pg.group_id FROM aos_products_quotes pg LEFT JOIN aos_line_item_groups lig ON pg.group_id = lig.id WHERE pg.parent_type = '" . $bean->object_name . "' AND pg.parent_id = '" . $bean->id . "' AND pg.deleted = 0 ORDER BY lig.number ASC, pg.number ASC";
         $res = $bean->db->query($sql);
         while ($row = $bean->db->fetchByAssoc($res)) {
             $lineItemsGroups[$row['group_id']][$row['id']] = $row['product_id'];
             $lineItems[$row['id']] = $row['product_id'];
         }
 
-        $template = new AOS_PDF_Templates();
+        $template = BeanFactory::newBean('AOS_PDF_Templates');
         $template->retrieve($template_id);
         if (empty($template->id)) {
             throw new Exception('Error retrieving template.');
@@ -65,12 +63,13 @@ abstract class Base64PDFGenerator
         $object_arr[$bean->module_dir] = $bean->id;
 
         //backward compatibility
-        $object_arr['Accounts'] = $bean->billing_account_id;
-        $object_arr['Contacts'] = $bean->billing_contact_id;
-        $object_arr['Users'] = $bean->assigned_user_id;
-        $object_arr['Currencies'] = $bean->currency_id;
+        $object_arr['Accounts'] = $bean->billing_account_id ?? '';
+        $object_arr['Contacts'] = $bean->billing_contact_id ?? '';
+        $object_arr['Users'] = $bean->assigned_user_id ?? '';
+        $object_arr['Currencies'] = $bean->currency_id ?? '';
 
-        $search = array('/<script[^>]*?>.*?<\/script>/si',      // Strip out javascript
+        $search = array(
+            '/<script[^>]*?>.*?<\/script>/si',      // Strip out javascript
             '/<[\/\!]*?[^<>]*?>/si',        // Strip out HTML tags
             '/([\r\n])[\s]+/',          // Strip out white space
             '/&(quot|#34);/i',          // Replace HTML entities
@@ -84,7 +83,8 @@ abstract class Base64PDFGenerator
             '/&#(\d+);/'
         );
 
-        $replace = array('',
+        $replace = array(
+            '',
             '',
             '\1',
             '"',
@@ -98,9 +98,9 @@ abstract class Base64PDFGenerator
             'chr(%1)'
         );
 
-        $header = preg_replace($search, $replace, $template->pdfheader);
-        $footer = preg_replace($search, $replace, $template->pdffooter);
-        $text = preg_replace($search, $replace, $template->description);
+        $header = preg_replace($search, $replace, (string) $template->pdfheader);
+        $footer = preg_replace($search, $replace, (string) $template->pdffooter);
+        $text = preg_replace($search, $replace, (string) $template->description);
         $text = str_replace("<p><pagebreak /></p>", "<pagebreak />", $text);
         $text = preg_replace_callback(
             '/\{DATE\s+(.*?)\}/',
@@ -124,26 +124,32 @@ abstract class Base64PDFGenerator
         $header = templateParser::parse_template($header, $object_arr);
         $footer = templateParser::parse_template($footer, $object_arr);
 
-        $printable = str_replace("\n", "<br />", $converted);
-
+        $printable = str_replace("\n", "<br />", (string) $converted);
         ob_clean();
         try {
             $orientation = ($template->orientation == "Landscape") ? "-L" : "";
-            $pdf = new mPDF(
-                'en',
-                $template->page_size . $orientation,
-                '',
-                'DejaVuSansCondensed',
-                $template->margin_left,
-                $template->margin_right,
-                $template->margin_top,
-                $template->margin_bottom,
-                $template->margin_header,
-                $template->margin_footer
-            );
+
+            // Define custom configuration options
+            $mpdfConfig = [
+                'mode' => 'utf-8', // Set character encoding (default is utf-8)
+                'format' => $template->page_size . $orientation, // Set the page format
+                'margin_left' => $template->margin_left,
+                'margin_right' => $template->margin_right,
+                'margin_top' => $template->margin_top,
+                'margin_bottom' => $template->margin_bottom,
+                'margin_header' => $template->margin_header,
+                'margin_footer' => $template->margin_footer,
+                'default_font_size' => 0, // Default font size
+                'default_font' => 'DejaVuSansCondensed', // Default font family
+                // Add more configuration options as needed
+            ];
+
+            // Create a new instance of mPDF with custom configuration
+            $pdf = new \Mpdf\Mpdf($mpdfConfig);
             $pdf->autoLangToFont = true;
-            $pdf->SetHTMLHeader($header);
-            $pdf->SetHTMLFooter($footer);
+            $pdf->SetHeader($header);
+            $pdf->SetFooter($footer);
+            ini_set('pcre.backtrack_limit', '1000000'); // Set an appropriate value based on your needs
             $pdf->WriteHTML($printable);
             return base64_encode($pdf->Output('ignored', 'S'));
         } catch (MpdfException $e) {
@@ -167,12 +173,10 @@ abstract class Base64PDFGenerator
         $endElement = '</' . $element . '>';
 
 
-        $groups = new AOS_Line_Item_Groups();
+        $groups = BeanFactory::newBean('AOS_Line_Item_Groups');
         foreach ($groups->field_defs as $name => $arr) {
-            if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id')
-                || $arr['type'] == 'id' || $arr['type'] == 'link')
-            ) {
-                $curNum = strpos($text, '$aos_line_item_groups_' . $name);
+            if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id') || $arr['type'] == 'id' || $arr['type'] == 'link')) {
+                $curNum = strpos((string) $text, '$aos_line_item_groups_' . $name);
                 if ($curNum) {
                     if ($curNum < $firstNum || $firstNum == 0) {
                         $firstValue = '$aos_line_item_groups_' . $name;
@@ -196,7 +200,7 @@ abstract class Base64PDFGenerator
                 $groupPart = $firstValue . $parts[0] . $lastValue;
             }
 
-            if (count($lineItemsGroups) != 0) {
+            if ((is_countable($lineItemsGroups) ? count($lineItemsGroups) : 0) != 0) {
                 //Read line start <tr> value
                 $tcount = strrpos($text, $startElement);
                 $lsValue = substr($text, $tcount);
@@ -213,7 +217,7 @@ abstract class Base64PDFGenerator
 
                 $tdTemp = explode($lsValue, $text);
 
-                $groupPart = $lsValue . $tdTemp[count($tdTemp) - 1] . $groupPart . $leValue;
+                $groupPart = $lsValue . $tdTemp[(is_countable($tdTemp) ? count($tdTemp) : 0) - 1] . $groupPart . $leValue;
 
                 $text = $tdTemp[0];
 
@@ -257,12 +261,11 @@ abstract class Base64PDFGenerator
         $endElement = '</' . $element . '>';
 
         //Find first and last valid line values
-        $product_quote = new AOS_Products_Quotes();
+        $product_quote = BeanFactory::newBean('AOS_Products_Quotes');
         foreach ($product_quote->field_defs as $name => $arr) {
             if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id')
-                || $arr['type'] == 'id' || $arr['type'] == 'link')
-            ) {
-                $curNum = strpos($text, '$aos_products_quotes_' . $name);
+                || $arr['type'] == 'id' || $arr['type'] == 'link')) {
+                $curNum = strpos((string) $text, '$aos_products_quotes_' . $name);
 
                 if ($curNum) {
                     if ($curNum < $firstNum || $firstNum == 0) {
@@ -277,12 +280,11 @@ abstract class Base64PDFGenerator
             }
         }
 
-        $product = new AOS_Products();
+        $product = BeanFactory::newBean('AOS_Products');
         foreach ($product->field_defs as $name => $arr) {
             if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id')
-                || $arr['type'] == 'id' || $arr['type'] == 'link')
-            ) {
-                $curNum = strpos($text, '$aos_products_' . $name);
+                || $arr['type'] == 'id' || $arr['type'] == 'link')) {
+                $curNum = strpos((string) $text, '$aos_products_' . $name);
                 if ($curNum) {
                     if ($curNum < $firstNum || $firstNum == 0) {
                         $firstValue = '$aos_products_' . $name;
@@ -323,12 +325,12 @@ abstract class Base64PDFGenerator
             $leValue = substr($tparts[1], 0, $tcount);
             $tdTemp = explode($lsValue, $temp);
 
-            $linePart = $lsValue . $tdTemp[count($tdTemp) - 1] . $linePart . $leValue;
+            $linePart = $lsValue . $tdTemp[(is_countable($tdTemp) ? count($tdTemp) : 0) - 1] . $linePart . $leValue;
             $parts = explode($linePart, $text);
             $text = $parts[0];
 
             //Converting Line Items
-            if (count($lineItems) != 0) {
+            if ((is_countable($lineItems) ? count($lineItems) : 0) != 0) {
                 foreach ($lineItems as $id => $productId) {
                     if ($productId != null && $productId != '0') {
                         $obb['AOS_Products_Quotes'] = $id;
@@ -338,7 +340,9 @@ abstract class Base64PDFGenerator
                 }
             }
 
-            for ($i = 1; $i < count($parts); $i++) {
+            $partsCount = is_countable($parts) ? count($parts) : 0;
+
+            for ($i = 1; $i < $partsCount; $i++) {
                 $text .= $parts[$i];
             }
         }
@@ -356,14 +360,13 @@ abstract class Base64PDFGenerator
         $startElement = '<' . $element;
         $endElement = '</' . $element . '>';
 
-        $text = str_replace("\$aos_services_quotes_service", "\$aos_services_quotes_product", $text);
+        $text = str_replace("\$aos_services_quotes_service", "\$aos_services_quotes_product", (string) $text);
 
         //Find first and last valid line values
-        $product_quote = new AOS_Products_Quotes();
+        $product_quote = BeanFactory::newBean('AOS_Products_Quotes');
         foreach ($product_quote->field_defs as $name => $arr) {
             if (!((isset($arr['dbType']) && strtolower($arr['dbType']) == 'id')
-                || $arr['type'] == 'id' || $arr['type'] == 'link')
-            ) {
+                || $arr['type'] == 'id' || $arr['type'] == 'link')) {
                 $curNum = strpos($text, '$aos_services_quotes_' . $name);
                 if ($curNum) {
                     if ($curNum < $firstNum || $firstNum == 0) {
@@ -403,12 +406,12 @@ abstract class Base64PDFGenerator
             $leValue = substr($tparts[1], 0, $tcount);
             $tdTemp = explode($lsValue, $temp);
 
-            $linePart = $lsValue . $tdTemp[count($tdTemp) - 1] . $linePart . $leValue;
+            $linePart = $lsValue . $tdTemp[(is_countable($tdTemp) ? count($tdTemp) : 0) - 1] . $linePart . $leValue;
             $parts = explode($linePart, $text);
             $text = $parts[0];
 
             //Converting Line Items
-            if (count($lineItems) != 0) {
+            if ((is_countable($lineItems) ? count($lineItems) : 0) != 0) {
                 foreach ($lineItems as $id => $productId) {
                     if ($productId == null || $productId == '0') {
                         $obb['AOS_Products_Quotes'] = $id;
@@ -417,7 +420,9 @@ abstract class Base64PDFGenerator
                 }
             }
 
-            for ($i = 1; $i < count($parts); $i++) {
+            $partsCount = is_countable($parts) ? count($parts) : 0;
+
+            for ($i = 1; $i < $partsCount; $i++) {
                 $text .= $parts[$i];
             }
         }
