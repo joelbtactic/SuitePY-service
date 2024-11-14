@@ -2,63 +2,52 @@
 [![GitHub (pre-)release](https://img.shields.io/github/release/btactic/SuitePY-service/all.svg?style=flat-square)](https://github.com/btactic/SuitePY-service/releases/latest)
 
 # SuitePY-service
-Custom SuiteCRM WebService for SuitePY.
+Custom SuiteCRM WebService for SuitePY to install new custom endpoints for API v8.
 
 # Requirements
 
-Install the _mPDF_ library:
+Install the _mPDF_ library for PHP 8.2:
 
 ```
 cd /path/to/suitecrm-root/
-composer require mpdf/mpdf:6.1.0
+php8.2 /usr/bin/composer require mpdf/mpdf:8.2.4
 ```
 
-> **WARNING: This command will show an error like this:**
->
-> In process.php line 344:
->
-> proc_open(): fork failed - Cannot allocate memory
-
-Ignore this error and try again:
+Check if the correct version of the mpdf is the 8.2.4, you can do that with:
 
 ```
-composer update
-```
-
-Check if the correct version of the mpdf is the 6.1.0, you can do that with:
-
-```
-cd /path/to/suitecrm-root/
-composer show -i | grep 'mpdf'
+php8.2 /usr/bin/composer show -i | grep 'mpdf'
 ```
 
 # How to install
 
-Download zip of [latest release](https://github.com/btactic/SuitePY-service/releases/latest) and install it using Module Loader. For Suitecrm 7.12 or superior versions zip elements must not be all together in a general dir, and must be separated:
+For Suitecrm 7.12 or superior versions zip elements must not be all together in a general dir, and must be separated:
 
 ```
-mkdir /tmp/suitepyservice
-cd /tmp/suitepyservice
+git clone https://github.com/joelbtactic/SuitePY-service.git
+cd SuitePY-service
 ```
 
-And with the use of the `wget`, `unzip`, and other commands you will generate the zip you need:
+And with the use of the `zip` command you will generate the zip you need:
 
 ```
-wget <latest-release>
-unzip <latest-release>
-cd <latest-release>
-zip -r SuitePY-service.zip custom/ manifest.php
+zip -r suitepy-service.zip custom LICENSE manifest.php README.md  
 ```
 
-Not compatible with Suitecrm 8.X.
+Finally, to install this service you must use the **Module Loader** option in your SuiteCRM.
 
-## Custom API EntryPoints
-REST URL
+**Not compatible with Suitecrm 8.X.**
+
+## Custom API Endpoints
+The new custom endpoints are:
+
 ```
-https://crm.example.com/custom/service/suitepy/rest.php
+{{suitecrm.url}}/Api/V8/custom/getNoteAttach/{note_id}
+```
+This first endpoint, retrieve an attachment from a note.
+
+```
+{{suitecrm.url}}/Api/V8/custom/getPdfTemplate/{bean_module}/{bean_id}/{template_id}
 ```
 
-SOAP WSDL
-```
-https://crm.example.com/custom/service/suitepy/soap.php?wsdl
-```
+And this second endpoint, PDF Template for a given module record.
