@@ -50,4 +50,4 @@ This first endpoint, retrieve an attachment from a note.
 {{suitecrm.url}}/Api/V8/custom/getPdfTemplate/{bean_module}/{bean_id}/{template_id}
 ```
 
-And this second endpoint, PDF Template for a given module record.
+And this second endpoint, retrieve PDF Template for a given module record.
